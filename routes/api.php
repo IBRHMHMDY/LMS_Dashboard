@@ -25,7 +25,10 @@ Route::prefix('v1')->group(function () {
             Route::post('/logout', [AuthController::class, 'logout']);
         });
         
-        // سيتم إضافة مسارات الكورسات والدروس هنا لاحقاً...
+        // مسارات التعلم والتسجيل (My Learning & Enrollments)
+        Route::get('/my-courses', [\App\Http\Controllers\Api\V1\EnrollmentController::class, 'myCourses']);
+        Route::post('/courses/{course}/enroll', [\App\Http\Controllers\Api\V1\EnrollmentController::class, 'enroll']);
+        Route::get('/courses/{course}/enrollment-status', [\App\Http\Controllers\Api\V1\EnrollmentController::class, 'checkStatus']);
     });
 
 });
