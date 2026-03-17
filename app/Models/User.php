@@ -2,7 +2,8 @@
 
 namespace App\Models;
 
-use App\Models\Course;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -11,7 +12,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes;
 
@@ -37,11 +38,22 @@ class User extends Authenticatable
         ];
     }
 
-    // علاقة المدرب بكورساته
+    // تحديد صلاحية الدخول للوحات Filament
+    public function canAccessPanel(Panel $panel): bool
+    {
+        if ($panel->getId() === 'admin') {
+            return $this->hasRole('admin');
+        }
+
+        if ($panel->getId() === 'instructor') {
+            return $this->hasRole('instructor');
+        }
+
+        return false;
+    }
+
     public function coursesAsInstructor(): HasMany
     {
         return $this->hasMany(Course::class, 'instructor_id');
     }
-
-    // سيتم إضافة علاقة الـ enrollments لاحقاً عند إنشاء الـ Model
 }
