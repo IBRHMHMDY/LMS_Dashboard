@@ -2,21 +2,20 @@
 
 namespace App\Models;
 
-use App\Models\Course;
+use App\Models\Lesson;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Category extends Model
+class Section extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'name',
-        'slug',
-        'parent_id',
-        'icon',
+        'course_id',
+        'title',
+        'order',
         'is_active',
     ];
 
@@ -24,21 +23,17 @@ class Category extends Model
     {
         return [
             'is_active' => 'boolean',
+            'order' => 'integer',
         ];
     }
 
-    public function parent(): BelongsTo
+    public function course(): BelongsTo
     {
-        return $this->belongsTo(Category::class, 'parent_id');
+        return $this->belongsTo(Course::class);
     }
 
-    public function children(): HasMany
+    public function lessons(): HasMany
     {
-        return $this->hasMany(Category::class, 'parent_id');
-    }
-
-    public function courses(): HasMany
-    {
-        return $this->hasMany(Course::class);
+        return $this->hasMany(Lesson::class)->orderBy('order');
     }
 }
