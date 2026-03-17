@@ -7,6 +7,13 @@ use App\Enums\CourseStatus;
 use App\Filament\Instructor\Resources\CourseResource\Pages;
 use App\Models\Course;
 use Filament\Forms;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Tabs;
+use Filament\Forms\Components\Tabs\Tab;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -34,73 +41,73 @@ class CourseResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Tabs::make('Course Details')
+                Tabs::make('Course Details')
                     ->tabs([
                         // تبويب المعلومات الأساسية
-                        Forms\Components\Tabs\Tab::make('General Information')
+                        Tab::make('General Information')
                             ->icon('heroicon-o-information-circle')
                             ->schema([
-                                Forms\Components\TextInput::make('title')
+                                TextInput::make('title')
                                     ->required()
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(fn (string $operation, $state, Forms\Set $set) => $operation === 'edit' ? $set('slug', Str::slug($state) . '-' . uniqid()) : null)
                                     ->maxLength(255),
                                 
-                                Forms\Components\TextInput::make('slug')
+                                TextInput::make('slug')
                                     ->required()
                                     ->unique(ignoreRecord: true)
                                     ->readOnly(),
 
-                                Forms\Components\Select::make('category_id')
+                                Select::make('category_id')
                                     ->relationship('category', 'name')
                                     ->searchable()
                                     ->preload()
                                     ->required(),
 
-                                Forms\Components\Textarea::make('subtitle')
+                                Textarea::make('subtitle')
                                     ->maxLength(500)
                                     ->columnSpanFull(),
 
-                                Forms\Components\RichEditor::make('description')
+                                RichEditor::make('description')
                                     ->required()
                                     ->columnSpanFull(),
                             ])->columns(2),
 
                         // تبويب التسعير والمستوى
-                        Forms\Components\Tabs\Tab::make('Pricing & Status')
+                        Tab::make('Pricing & Status')
                             ->icon('heroicon-o-currency-dollar')
                             ->schema([
-                                Forms\Components\TextInput::make('price')
+                                TextInput::make('price')
                                     ->numeric()
                                     ->prefix('$')
                                     ->default(0.00)
                                     ->required(),
 
-                                Forms\Components\TextInput::make('discount_price')
+                                TextInput::make('discount_price')
                                     ->numeric()
                                     ->prefix('$'),
 
-                                Forms\Components\Select::make('level')
+                                Select::make('level')
                                     ->options(CourseLevel::class)
                                     ->default(CourseLevel::BEGINNER)
                                     ->required(),
 
-                                Forms\Components\Select::make('status')
+                                Select::make('status')
                                     ->options(CourseStatus::class)
                                     ->default(CourseStatus::DRAFT)
                                     ->required(),
                             ])->columns(2),
 
                         // تبويب الوسائط (الصور والفيديو)
-                        Forms\Components\Tabs\Tab::make('Media')
+                        Tab::make('Media')
                             ->icon('heroicon-o-photo')
                             ->schema([
-                                Forms\Components\FileUpload::make('thumbnail')
+                                FileUpload::make('thumbnail')
                                     ->image()
                                     ->directory('course-thumbnails')
                                     ->columnSpanFull(),
 
-                                Forms\Components\TextInput::make('promo_video_url')
+                                TextInput::make('promo_video_url')
                                     ->url()
                                     ->label('Promo Video URL (Youtube/Vimeo)')
                                     ->columnSpanFull(),
@@ -137,7 +144,7 @@ class CourseResource extends Resource
 
                         Tables\Columns\Layout\Split::make([
                             Tables\Columns\TextColumn::make('price')
-                                ->money('USD')
+                                ->money('EGP')
                                 ->weight('bold')
                                 ->color('success'),
                             

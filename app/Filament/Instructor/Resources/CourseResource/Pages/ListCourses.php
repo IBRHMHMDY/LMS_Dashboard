@@ -5,7 +5,11 @@ namespace App\Filament\Instructor\Resources\CourseResource\Pages;
 use App\Filament\Instructor\Resources\CourseResource;
 use App\Models\Course;
 use Filament\Actions;
+use Filament\Actions\CreateAction;
 use Filament\Forms;
+use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -27,7 +31,7 @@ class ListCourses extends ListRecords
     {
         return [
             // زر إضافة كورس جديد يفتح كـ Modal
-            Actions\CreateAction::make()
+            CreateAction::make()
                 ->label('New Course')
                 ->icon('heroicon-o-plus-circle')
                 ->modalHeading('Start a New Course')
@@ -35,21 +39,24 @@ class ListCourses extends ListRecords
                 ->modalWidth('md')
                 ->model(Course::class)
                 ->form([
-                    Forms\Components\TextInput::make('title')
+                    TextInput::make('title')
                         ->required()
                         ->maxLength(255),
                     
-                    Forms\Components\Select::make('category_id')
+                    Select::make('category_id')
                         ->relationship('category', 'name')
                         ->searchable()
                         ->preload()
                         ->required(),
                         
-                    Forms\Components\TextInput::make('price')
+                    TextInput::make('price')
                         ->numeric()
                         ->prefix('$')
                         ->default(0.00)
                         ->required(),
+                    RichEditor::make('description')
+                                    ->required()
+                                    ->columnSpanFull(),
                 ])
                 ->mutateFormDataUsing(function (array $data): array {
                     // تعيين المدرب الحالي آلياً وإنشاء الـ slug
