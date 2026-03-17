@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
     
-    // مسارات المصادقة (Public)
+    // (Public)
     Route::prefix('auth')->group(function () {
         Route::post('/register', [AuthController::class, 'register']);
         Route::post('/login', [AuthController::class, 'login']);
@@ -18,17 +18,20 @@ Route::prefix('v1')->group(function () {
     Route::get('/courses/{slug}', [CourseController::class, 'show']);
 
 
-    // المسارات المحمية بـ Sanctum (Protected)
+    //Sanctum (Protected)
     Route::middleware('auth:sanctum')->group(function () {
         Route::prefix('auth')->group(function () {
             Route::get('/profile', [AuthController::class, 'profile']);
             Route::post('/logout', [AuthController::class, 'logout']);
         });
         
-        // مسارات التعلم والتسجيل (My Learning & Enrollments)
+        // (My Learning & Enrollments)
         Route::get('/my-courses', [\App\Http\Controllers\Api\V1\EnrollmentController::class, 'myCourses']);
         Route::post('/courses/{course}/enroll', [\App\Http\Controllers\Api\V1\EnrollmentController::class, 'enroll']);
         Route::get('/courses/{course}/enrollment-status', [\App\Http\Controllers\Api\V1\EnrollmentController::class, 'checkStatus']);
+        // (Lessons & Progress)
+        Route::get('/lessons/{lesson}', [\App\Http\Controllers\Api\V1\LessonController::class, 'show']);
+        Route::post('/lessons/{lesson}/complete', [\App\Http\Controllers\Api\V1\LessonController::class, 'toggleComplete']);
     });
 
 });
