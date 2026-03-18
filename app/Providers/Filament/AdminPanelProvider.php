@@ -9,13 +9,14 @@ use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Widgets;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
@@ -26,10 +27,17 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
             ->colors([
                 'primary' => Color::Amber, // لون مميز للإدارة يختلف عن لون المدرب
             ])
+            ->brandLogo(fn () => view('filament.logo', ['panel' => 'Admin']))
+            ->brandLogoHeight('3rem') // زيادة الارتفاع قليلاً ليتسع للسطرين
+            ->profile() // تفعيل صفحة تعديل الملف الشخصي (Edit Profile)
+            ->databaseNotifications() // تفعيل نظام الإشعارات (يُظهر أيقونة الجرس تلقائياً)
+            ->renderHook(
+                PanelsRenderHook::GLOBAL_SEARCH_AFTER, // حقن أيقونة اللغة قبل الإشعارات وقائمة المستخدم
+                fn (): string => Blade::render('@include("filament.language-icon")')
+            )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([

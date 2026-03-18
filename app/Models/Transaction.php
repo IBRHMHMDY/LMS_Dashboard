@@ -18,7 +18,7 @@ class Transaction extends Model
         'transaction_number',
         'amount',
         'platform_commission',
-        'instructor_commission',
+        'instructor_earning',
         'status',
         'payment_gateway',
         'payment_gateway_reference',

@@ -20,7 +20,7 @@ return new class extends Migration
             
             $table->decimal('amount', 10, 2); // المبلغ الإجمالي المدفوع
             $table->decimal('platform_commission', 10, 2)->default(0.00); // عمولة المنصة
-            $table->decimal('instructor_commission', 10, 2)->default(0.00); // ربح المدرب الصافي
+            $table->decimal('instructor_earning', 10, 2)->default(0.00); // ربح المدرب الصافي
             
             $table->string('status')->default('pending'); // App\Enums\TransactionStatus
             

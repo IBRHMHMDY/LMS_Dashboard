@@ -26,7 +26,7 @@ class InstructorStatsOverview extends BaseWidget
         // إجمالي الأرباح (من جدول Transactions بناءً على العمولات)
         $totalEarnings = \App\Models\Transaction::where('instructor_id', $instructorId)
             ->where('status', 'completed')
-            ->sum('instructor_commission');
+            ->sum('instructor_earning');
 
         return [
             Stat::make('My Courses', $totalCourses)
