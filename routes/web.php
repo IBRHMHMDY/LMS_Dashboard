@@ -4,7 +4,7 @@ use App\Http\Controllers\Web\AuthController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('auth.login'); // أو يمكنك توجيهها للـ login مباشرة: return redirect('/login');
+    return view('auth.login');
 });
 
 // مسارات صفحة الدخول الموحدة

@@ -121,50 +121,53 @@ class CourseResource extends Resource
         return $table
             ->contentGrid([
                 'md' => 2,
-                'xl' => 3, // عرض 3 بطاقات في الشاشات الكبيرة
+                'xl' => 3, 
             ])
             ->columns([
-                // بناء شكل البطاقة (Card Layout) بدلاً من الصفوف التقليدية
                 Tables\Columns\Layout\Stack::make([
-                    Tables\Columns\ImageColumn::make('thumbnail')
-                        ->height('200px')
-                        ->width('100%')
-                        ->extraImgAttributes(['class' => 'object-cover rounded-t-xl'])
-                        ->defaultImageUrl(url('https://ui-avatars.com/api/?name=Course&background=random&size=400')),
                     
+                    // 1. الصورة العلوية (استخدام الـ View المخصص لكسر كل قيود Filament)
+                    Tables\Columns\ViewColumn::make('thumbnail')
+                        ->view('filament.instructor.components.course-thumbnail'),
+                    
+                    // 2. محتوى البطاقة
                     Tables\Columns\Layout\Stack::make([
                         Tables\Columns\TextColumn::make('title')
                             ->weight('bold')
-                            ->size('lg')
-                            ->searchable(),
+                            ->size(Tables\Columns\TextColumn\TextColumnSize::Large)
+                            ->searchable()
+                            ->limit(40),
 
                         Tables\Columns\TextColumn::make('category.name')
                             ->color('gray')
-                            ->icon('heroicon-o-tag'),
+                            ->icon('heroicon-m-tag'),
 
                         Tables\Columns\Layout\Split::make([
                             Tables\Columns\TextColumn::make('price')
-                                ->money('EGP')
+                                ->money('USD') 
                                 ->weight('bold')
                                 ->color('success'),
                             
                             Tables\Columns\TextColumn::make('status')
                                 ->badge(),
-                        ])->extraAttributes(['class' => 'mt-4']),
-                    ])->space(2)->extraAttributes(['class' => 'p-4 border-t border-gray-100 dark:border-gray-800']),
-                ])->space(0), // مسافة صفر لدمج الصورة مع المحتوى بشكل احترافي
+                        ])->extraAttributes(['style' => 'margin-top: 1rem; align-items: center;']),
+                    ])->space(2)->extraAttributes(['style' => 'padding: 1.25rem; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between;']),
+                ])
+                ->space(0)
+                // الغلاف الخارجي للبطاقة
+                ->extraAttributes([
+                    'style' => 'background-color: var(--fi-bg-color, white); border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid var(--fi-border-color, #e5e7eb); overflow: hidden; display: flex; flex-direction: column; height: 100%; padding: 0;'
+                ]),
             ])
             ->filters([
-                // فلاتر البحث
-                Tables\Filters\SelectFilter::make('status')->options(CourseStatus::class),
-                Tables\Filters\SelectFilter::make('category_id')->relationship('category', 'name'),
+                Tables\Filters\SelectFilter::make('status')->options(\App\Enums\CourseStatus::class),
+                Tables\Filters\SelectFilter::make('category_id')->relationship('category', 'name')->label('Category'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
                     ->button()
                     ->color('primary')
-                    ->size('sm')
-                    ->extraAttributes(['class' => 'm-4']), // زر التعديل أسفل البطاقة
+                    ->extraAttributes(['style' => 'margin: 1rem; width: calc(100% - 2rem); display: flex; justify-content: center;']),
             ]);
     }
 

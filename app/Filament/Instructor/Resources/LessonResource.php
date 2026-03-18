@@ -21,6 +21,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Enum;
 
 class LessonResource extends Resource
 {
@@ -144,32 +145,32 @@ class LessonResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('section.course.title')
-                    ->label('Course')
-                    ->sortable()
+                Tables\Columns\TextColumn::make('title')
                     ->searchable()
                     ->weight('bold'),
 
-                Tables\Columns\TextColumn::make('section.title')
-                    ->label('Section')
-                    ->sortable()
-                    ->searchable()
-                    ->color('gray'),
-
-                Tables\Columns\TextColumn::make('title')
-                    ->searchable()
-                    ->description(fn (Lesson $record): string => Str::limit($record->slug, 30)),
-
                 Tables\Columns\TextColumn::make('lesson_type')
-                    ->badge(),
+                    ->badge()
+                    ->color(fn (LessonType $state): String => match ($state) {
+                        LessonType::VIDEO_URL->value => 'info',
+                        LessonType::VIDEO_UPLOAD->value => 'warning',
+                        LessonType::TEXT->value => 'success',
+                        LessonType::PDF->value => 'danger',
+                        default => 'gray',
+                    }),
 
                 Tables\Columns\IconColumn::make('is_free_preview')
                     ->boolean()
-                    ->label('Preview'),
+                    ->label('Free Preview'),
 
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean()
-                    ->label('Status'),
+                    ->label('Active'),
+
+                Tables\Columns\TextColumn::make('duration_in_minutes')
+                    ->label('Duration')
+                    ->suffix(' mins')
+                    ->color('gray'),
 
                 Tables\Columns\TextColumn::make('order')
                     ->sortable()
@@ -177,7 +178,6 @@ class LessonResource extends Resource
                     ->color('gray'),
             ])
             ->filters([
-                // فلتر ذكي للبحث بالكورس
                 Tables\Filters\SelectFilter::make('course_id')
                     ->label('Filter by Course')
                     ->options(Course::where('instructor_id', Auth::id())->pluck('title', 'id'))
@@ -186,37 +186,33 @@ class LessonResource extends Resource
                             $query->whereHas('section', fn($q) => $q->where('course_id', $data['value']));
                         }
                     }),
-                
-                // فلتر للبحث بالوحدة
-                Tables\Filters\SelectFilter::make('section_id')
-                    ->label('Filter by Section')
-                    ->relationship(
-                        name: 'section',
-                        titleAttribute: 'title',
-                        modifyQueryUsing: fn (Builder $query) => $query->whereHas('course', fn($q) => $q->where('instructor_id', Auth::id()))
-                    )
-                    ->searchable()
-                    ->preload(),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
-                    ->modalWidth('2xl') // عرض أوسع ليناسب محرر النصوص والفيديو
+                    ->modalWidth('2xl')
                     ->mutateRecordDataUsing(function (array $data): array {
-                        // عند التعديل، نحتاج لتعبئة حقل الكورس الوهمي لكي تعمل قائمة الوحدات المنسدلة بشكل صحيح
                         $section = Section::find($data['section_id']);
                         $data['course_id'] = $section ? $section->course_id : null;
                         return $data;
                     }),
                 Tables\Actions\DeleteAction::make(),
             ])
+            // التحديث الاحترافي للـ UX: تجميع الدروس حسب الكورس ثم الوحدة
+            ->groups([
+                Tables\Grouping\Group::make('section.course.title')
+                    ->label('Course Name')
+                    ->collapsible(),
+                Tables\Grouping\Group::make('section.title')
+                    ->label('Section Name')
+                    ->collapsible(),
+            ])
+            ->defaultGroup('section.course.title') // تجميع افتراضي بالكورس
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->reorderable('order') // تفعيل السحب والإفلات لترتيب الدروس
-            ->defaultSort('section_id', 'asc')
-            ->defaultSort('order', 'asc');
+            ->defaultSort('order', 'asc'); // تم إيقاف reorderable هنا لمنع تداخل ترتيب الكورسات المختلفة
     }
 
     public static function getPages(): array
