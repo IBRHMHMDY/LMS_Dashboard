@@ -22,7 +22,9 @@ class User extends Authenticatable implements FilamentUser
         'password',
         'avatar',
         'bio',
+        'headline',
         'phone_number',
+        'is_active',
     ];
 
     protected $hidden = [
@@ -35,6 +37,7 @@ class User extends Authenticatable implements FilamentUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean'
         ];
     }
 
@@ -51,9 +54,27 @@ class User extends Authenticatable implements FilamentUser
 
         return false;
     }
-
+    /**
+     * علاقة المدرب بكورساته التى انشاها
+     */
     public function coursesAsInstructor(): HasMany
     {
         return $this->hasMany(Course::class, 'instructor_id');
+    }
+
+    /**
+     * علاقة الطالب بالاشتراكات (الكورسات التي التحق بها)
+     */
+    public function enrollments()
+    {
+        return $this->hasMany(\App\Models\Enrollment::class, 'user_id');
+    }
+
+    /**
+     * علاقة الطالب بسجل المدفوعات (العمليات المالية)
+     */
+    public function transactions()
+    {
+        return $this->hasMany(\App\Models\Transaction::class, 'user_id');
     }
 }

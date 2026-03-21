@@ -15,8 +15,10 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('avatar')->nullable();
-            $table->text('bio')->nullable(); // نبذة عن المدرب أو الطالب
+            $table->string('headline')->nullable();
+            $table->text('bio')->nullable();
             $table->string('phone_number')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();
