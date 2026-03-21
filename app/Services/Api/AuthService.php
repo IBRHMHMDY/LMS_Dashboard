@@ -55,4 +55,22 @@ class AuthService
         
         $token?->delete();
     }
+
+
+    public function updateProfile(User $user, array $data): User
+    {
+        // إذا كان هناك صورة (Avatar) سيتم معالجتها هنا لاحقاً
+        $user->update($data);
+
+        return $user->refresh();
+    }
+
+    public function changePassword(User $user, string $newPassword): void
+    {
+        $user->update([
+            'password' => Hash::make($newPassword),
+        ]);
+        
+        $user->tokens()->where('id', '!=', $user->currentAccessToken()->id)->delete();
+    }
 }

@@ -9,6 +9,8 @@ use App\Http\Resources\Api\UserResource;
 use App\Services\Api\AuthService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Api\Auth\UpdateProfileRequest;
+use App\Http\Requests\Api\Auth\ChangePasswordRequest;
 
 class AuthController extends Controller
 {
@@ -51,5 +53,29 @@ class AuthController extends Controller
         $this->authService->logout($request->user());
 
         return $this->successResponse(null, 'Logged out successfully');
+    }
+
+    // أضف هذه السطور في الأعلى
+
+// ... داخل كلاس AuthController أضف:
+
+    public function updateProfile(UpdateProfileRequest $request)
+    {
+        $user = $this->authService->updateProfile($request->user(), $request->validated());
+
+        return $this->successResponse(
+            new UserResource($user),
+            'Profile updated successfully.'
+        );
+    }
+
+    public function changePassword(ChangePasswordRequest $request)
+    {
+        $this->authService->changePassword($request->user(), $request->validated('password'));
+
+        return $this->successResponse(
+            null,
+            'Password changed successfully.'
+        );
     }
 }
