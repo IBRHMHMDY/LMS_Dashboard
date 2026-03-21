@@ -2,20 +2,33 @@
 
 namespace App\Enums;
 
-enum LessonType: string
-{
-    case VIDEO_URL = 'video_url'; // رابط خارجي مثل Youtube / Vimeo
-    case VIDEO_UPLOAD = 'video_upload'; // فيديو مرفوع على السيرفر/S3
-    case TEXT = 'text'; // مقال أو محتوى نصي
-    case PDF = 'pdf'; // ملف PDF يعرض داخل المنصة
+use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasLabel;
 
-    public function label(): string
+enum LessonType: string implements HasLabel, HasColor
+{
+    case VIDEO_URL = 'video_url';
+    case VIDEO_UPLOAD = 'video_upload';
+    case TEXT = 'text';
+    case PDF = 'pdf';
+
+    public function getLabel(): ?string
     {
-        return match($this) {
-            self::VIDEO_URL => 'Video URL',
-            self::VIDEO_UPLOAD => 'Uploaded Video',
-            self::TEXT => 'Text Content',
-            self::PDF => 'PDF Document',
+        return match ($this) {
+            self::VIDEO_URL => __('Video URL'),
+            self::VIDEO_UPLOAD => __('Video Upload'),
+            self::TEXT => __('Text Content'),
+            self::PDF => __('PDF Document'),
+        };
+    }
+
+    public function getColor(): string | array | null
+    {
+        return match ($this) {
+            self::VIDEO_URL => StatusColor::INFO->value,
+            self::VIDEO_UPLOAD => StatusColor::WARNING->value,
+            self::TEXT => StatusColor::SUCCESS->value,
+            self::PDF => StatusColor::DANGER->value,
         };
     }
 }

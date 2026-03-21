@@ -40,6 +40,16 @@ class Lesson extends Model implements HasMedia
         ];
     }
 
+    protected static function booted()
+    {
+        static::creating(function ($lesson) {
+            if (is_null($lesson->order)) {
+                $maxOrder = static::where('section_id', $lesson->section_id)->max('order');
+                $lesson->order = $maxOrder ? $maxOrder + 1 : 1;
+            }
+        });
+    }
+
     public function section(): BelongsTo
     {
         return $this->belongsTo(Section::class);

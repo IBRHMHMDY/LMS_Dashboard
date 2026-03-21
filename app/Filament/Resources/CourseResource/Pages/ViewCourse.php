@@ -11,6 +11,18 @@ class ViewCourse extends ViewRecord
 {
     protected static string $resource = CourseResource::class;
 
+    public function getTitle(): string
+    {
+        return __('Course: ') . $this->record->title;
+    }
+
+    public function getBreadcrumbs(): array
+    {
+        return [
+            $this->getResource()::getUrl('index') => __('Courses'),
+        ];
+    }
+
     protected function getHeaderActions(): array
     {
         return [

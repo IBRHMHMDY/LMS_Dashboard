@@ -3,16 +3,16 @@
 namespace App\Filament\Instructor\Resources\CourseResource\Pages;
 
 use App\Filament\Instructor\Resources\CourseResource;
-use Filament\Actions;
-use Filament\Resources\Pages\EditRecord;
+use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Facades\Auth;
 
-class EditCourse extends EditRecord
+class CreateCourse extends CreateRecord
 {
     protected static string $resource = CourseResource::class;
 
     public function getTitle(): string
     {
-        return __('Edit Course: ') .$this->record->title;
+        return __('Create Course:');
     }
 
     // 2. إخفاء الـ Breadcrumbs (المسار) تماماً بإرجاع مصفوفة فارغة
@@ -23,12 +23,10 @@ class EditCourse extends EditRecord
         ];
     }
 
-
-    protected function getHeaderActions(): array
+    protected function mutateFormDataBeforeCreate(array $data): array
     {
-        return [
-            Actions\DeleteAction::make(),
-        ];
+        $data['instructor_id'] = Auth::id();
+        return $data;
     }
 
     protected function getRedirectUrl(): string

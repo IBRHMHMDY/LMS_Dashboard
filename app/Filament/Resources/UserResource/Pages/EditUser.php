@@ -10,6 +10,14 @@ class EditUser extends EditRecord
 {
     protected static string $resource = UserResource::class;
 
+    public function getBreadcrumbs(): array
+    {
+        return [
+            $this->getResource()::getUrl('index') => __('Courses'),
+            '#' => $this->record->title,
+        ];
+    }
+
     protected function getHeaderActions(): array
     {
         return [

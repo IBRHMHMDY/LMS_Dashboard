@@ -10,119 +10,123 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Auth;
 
 class SectionResource extends Resource
 {
     protected static ?string $model = Section::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-view-columns';
-    protected static ?string $navigationLabel = 'Course Sections';
-    protected static ?string $modelLabel = 'Section';
-    protected static ?int $navigationSort = 2; // يظهر تحت الكورسات
+    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    // قصر عرض الوحدات على الكورسات التي يمتلكها المدرب الحالي فقط
-    public static function getEloquentQuery(): Builder
+    // 1. إخفاء الأقسام من القائمة الجانبية (Navigation Menu)
+    protected static bool $shouldRegisterNavigation = false;
+
+    public static function getModelLabel(): string
     {
-        return parent::getEloquentQuery()->whereHas('course', function (Builder $query) {
-            $query->where('instructor_id', Auth::id());
-        });
+        return __('Section');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Sections');
     }
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                // اختيار الكورس (تظهر كورسات هذا المدرب فقط)
-                Forms\Components\Select::make('course_id')
-                    ->relationship(
-                        name: 'course',
-                        titleAttribute: 'title',
-                        modifyQueryUsing: fn (Builder $query) => $query->where('instructor_id', Auth::id())
-                    )
-                    ->searchable()
-                    ->preload()
-                    ->required()
-                    ->columnSpanFull(),
+                Forms\Components\Section::make(__('Section Details'))
+                    ->schema([
+                        // حقل مخفي لالتقاط رقم الكورس من الرابط برمجياً
+                        Forms\Components\Hidden::make('course_id')
+                            ->default(request()->query('course_id'))
+                            ->required(),
 
-                Forms\Components\TextInput::make('title')
-                    ->required()
-                    ->maxLength(255)
-                    ->columnSpanFull(),
+                        Forms\Components\TextInput::make('title')
+                            ->label(__('Section Name'))
+                            ->required()
+                            ->maxLength(255)
+                            ->columnSpanFull(),
 
-                Forms\Components\TextInput::make('order')
-                    ->numeric()
-                    ->default(0)
-                    ->helperText('Used for sorting. You can also drag and drop in the table.'),
-
-                Forms\Components\Toggle::make('is_active')
-                    ->label('Active')
-                    ->default(true)
-                    ->inline(false),
+                        Forms\Components\TextInput::make('order')
+                            ->label(__('Order'))
+                            ->numeric()
+                            ->default(1)
+                            ->required(),
+                    ])
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
+            ->recordUrl(
+                fn (Section $record): string => LessonResource::getUrl('index', [
+                    'section_id' => $record->id, 
+                    'course_id' => request()->query('course_id')
+                ])
+            )
+            // 2. تصفية الجدول لعرض أقسام الكورس المحدد فقط وجلب عدد الدروس
+            ->modifyQueryUsing(function (Builder $query) {
+                $courseId = request()->query('course_id');
+                if ($courseId) {
+                    $query->where('course_id', $courseId);
+                }
+                $query->withCount('lessons');
+            })
             ->columns([
-                Tables\Columns\TextColumn::make('course.title')
-                    ->label('Course')
-                    ->sortable()
+                Tables\Columns\TextColumn::make('title')
+                    ->label(__('Section Name'))
                     ->searchable()
-                    ->description(fn (Section $record): string => 'Section: ' . $record->title)
                     ->weight('bold'),
 
-                Tables\Columns\TextColumn::make('title')
-                    ->searchable()
-                    ->hidden(), // أخفيناه لأننا عرضناه كـ description تحت اسم الكورس لترتيب أفضل
-
-                Tables\Columns\IconColumn::make('is_active')
-                    ->boolean()
-                    ->label('Status'),
-
-                Tables\Columns\TextColumn::make('order')
-                    ->sortable()
+                // 3. عرض عدد الدروس
+                Tables\Columns\TextColumn::make('lessons_count')
+                    ->label(__('Number of Lessons'))
                     ->badge()
-                    ->color('gray'),
-
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->color('success')
+                    ->icon('heroicon-m-document-text')
+                    ->sortable(),
             ])
             ->filters([
-                // فلتر لعرض وحدات كورس معين
-                Tables\Filters\SelectFilter::make('course_id')
-                    ->label('Filter by Course')
-                    ->relationship(
-                        name: 'course',
-                        titleAttribute: 'title',
-                        modifyQueryUsing: fn (Builder $query) => $query->where('instructor_id', Auth::id())
-                    )
-                    ->searchable()
-                    ->preload(),
+                // يمكن إضافة فلاتر هنا مستقبلاً
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
-                    ->modalWidth('md'),
-                Tables\Actions\DeleteAction::make(),
+                    ->label(__('Edit'))
+                    ->color('gray')
+                    // تمرير الـ Course ID أثناء التعديل للحفاظ على المسار
+                    ->url(fn (Section $record): string => SectionResource::getUrl('edit', ['record' => $record, 'course_id' => request()->query('course_id')])),
+                
+                // 4. زر التوجه إلى صفحة الدروس الخاصة بهذا القسم
+                Tables\Actions\Action::make('manage_lessons')
+                    ->label(__('Manage Lessons'))
+                    ->icon('heroicon-m-video-camera')
+                    ->button()
+                    ->color('primary')
+                    ->url(fn (Section $record): string => LessonResource::getUrl('index', ['section_id' => $record->id, 'course_id' => request()->query('course_id')])),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->reorderable('order') // تفعيل خاصية السحب والإفلات لترتيب الوحدات
-            ->defaultSort('course_id', 'asc') // الترتيب الافتراضي
             ->defaultSort('order', 'asc');
     }
 
+    public static function getRelations(): array
+    {
+        return [
+            //
+        ];
+    }
+
+    // 5. تسجيل الصفحات الجديدة التي أنشأناها في الخطوة الأولى
     public static function getPages(): array
     {
         return [
-            // استخدام ManageRecords يعني أن كل العمليات ستتم في نفس الصفحة عبر Modals
-            'index' => Pages\ManageSections::route('/'),
+            'index' => Pages\ListSections::route('/'),
+            'create' => Pages\CreateSection::route('/create'),
+            'edit' => Pages\EditSection::route('/{record}/edit'),
         ];
     }
 }

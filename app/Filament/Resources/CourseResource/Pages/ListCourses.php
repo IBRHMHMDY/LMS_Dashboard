@@ -12,6 +12,16 @@ class ListCourses extends ListRecords
 {
     protected static string $resource = CourseResource::class;
 
+    public function getTitle(): string
+    {
+        return __('Courses');
+    }
+
+    public function getBreadcrumbs(): array
+    {
+        return [];
+    }
+
     protected function getHeaderActions(): array
     {
         return [];
@@ -22,7 +32,7 @@ class ListCourses extends ListRecords
     {
         return [
             'all' => Tab::make('All Courses'),
-            'pending' => Tab::make('Pending Review')
+            'pending' => Tab::make('Pending Approval')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('status', CourseStatus::PENDING))
                 ->badge(CourseResource::getEloquentQuery()->where('status', CourseStatus::PENDING)->count())
                 ->badgeColor('warning'),

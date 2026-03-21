@@ -35,6 +35,10 @@ class InstructorPanelProvider extends PanelProvider
             ->databaseNotifications() 
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_AFTER,
+                fn (): string => Blade::render('@include("filament.instructor.new-course-icon")')
+            )
+            ->renderHook(
+                PanelsRenderHook::GLOBAL_SEARCH_AFTER,
                 fn (): string => Blade::render('@include("filament.language-icon")')
             )
             ->discoverResources(in: app_path('Filament/Instructor/Resources'), for: 'App\\Filament\\Instructor\\Resources')

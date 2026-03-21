@@ -7,19 +7,12 @@ use App\Enums\CourseStatus;
 use App\Filament\Instructor\Resources\CourseResource\Pages;
 use App\Models\Course;
 use Filament\Forms;
-use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Tabs;
-use Filament\Forms\Components\Tabs\Tab;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class CourseResource extends Resource
@@ -27,156 +20,223 @@ class CourseResource extends Resource
     protected static ?string $model = Course::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
-    protected static ?string $navigationLabel = 'My Courses';
-    protected static ?string $modelLabel = 'Course';
-    protected static ?int $navigationSort = 1;
 
-    // قصر البيانات على كورسات المدرب الحالي فقط
-    public static function getEloquentQuery(): Builder
+    // استخدام دالة الترجمة لاسم الـ Resource في القائمة الجانبية
+    public static function getModelLabel(): string
     {
-        return parent::getEloquentQuery()->where('instructor_id', Auth::id());
+        return __('Course');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Courses');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Courses');
     }
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Tabs::make('Course Details')
+                Forms\Components\Tabs::make(__('Course Details'))
                     ->tabs([
-                        // تبويب المعلومات الأساسية
-                        Tab::make('General Information')
-                            ->icon('heroicon-o-information-circle')
+                        // Tab 1: Basic Information
+                        Forms\Components\Tabs\Tab::make(__('Basic Information'))
+                            ->icon('heroicon-m-information-circle')
                             ->schema([
-                                TextInput::make('title')
+                                Forms\Components\TextInput::make('title')
+                                    ->label(__('Course Title'))
                                     ->required()
+                                    ->maxLength(255)
                                     ->live(onBlur: true)
-                                    ->afterStateUpdated(fn (string $operation, $state, Forms\Set $set) => $operation === 'edit' ? $set('slug', Str::slug($state) . '-' . uniqid()) : null)
-                                    ->maxLength(255),
+                                    ->afterStateUpdated(fn (Set $set, ?string $state) => $set('slug', Str::slug($state))),
                                 
-                                TextInput::make('slug')
+                                Forms\Components\TextInput::make('slug')
+                                    ->label(__('Slug'))
                                     ->required()
                                     ->unique(ignoreRecord: true)
-                                    ->readOnly(),
+                                    ->readOnly()
+                                    ->helperText(__('Auto-generated from title.')),
 
-                                Select::make('category_id')
+                                Forms\Components\TextInput::make('subtitle')
+                                    ->label(__('Subtitle'))
+                                    ->maxLength(255)
+                                    ->columnSpanFull(),
+
+                                Forms\Components\Select::make('category_id')
+                                    ->label(__('Category'))
                                     ->relationship('category', 'name')
                                     ->searchable()
                                     ->preload()
                                     ->required(),
 
-                                Textarea::make('subtitle')
-                                    ->maxLength(500)
+                                Forms\Components\Select::make('level')
+                                    ->label(__('Level'))
+                                    ->options(CourseLevel::class)
+                                    ->required(),
+                            ])->columns(2),
+
+                        // Tab 2: Media & Description
+                        Forms\Components\Tabs\Tab::make(__('Media & Description'))
+                            ->icon('heroicon-m-photo')
+                            ->schema([
+                                Forms\Components\FileUpload::make('thumbnail')
+                                    ->label(__('Course Thumbnail'))
+                                    ->image()
+                                    ->directory('courses/thumbnails')
                                     ->columnSpanFull(),
 
-                                RichEditor::make('description')
+                                Forms\Components\TextInput::make('promo_video_url')
+                                    ->label(__('Promotional Video URL'))
+                                    ->url()
+                                    ->placeholder('https://youtube.com/...')
+                                    ->columnSpanFull(),
+
+                                Forms\Components\RichEditor::make('description')
+                                    ->label(__('Course Description'))
                                     ->required()
                                     ->columnSpanFull(),
-                            ])->columns(2),
+                            ]),
 
-                        // تبويب التسعير والمستوى
-                        Tab::make('Pricing & Status')
-                            ->icon('heroicon-o-currency-dollar')
+                        // Tab 3: Curriculum Extras
+                        Forms\Components\Tabs\Tab::make(__('Course Outcomes'))
+                            ->icon('heroicon-m-academic-cap')
                             ->schema([
-                                TextInput::make('price')
-                                    ->numeric()
-                                    ->prefix('$')
-                                    ->default(0.00)
-                                    ->required(),
-
-                                TextInput::make('discount_price')
-                                    ->numeric()
-                                    ->prefix('$'),
-
-                                Select::make('level')
-                                    ->options(CourseLevel::class)
-                                    ->default(CourseLevel::BEGINNER)
-                                    ->required(),
-
-                                Select::make('status')
-                                    ->options(CourseStatus::class)
-                                    ->default(CourseStatus::DRAFT)
-                                    ->required(),
-                            ])->columns(2),
-
-                        // تبويب الوسائط (الصور والفيديو)
-                        Tab::make('Media')
-                            ->icon('heroicon-o-photo')
-                            ->schema([
-                                FileUpload::make('thumbnail')
-                                    ->image()
-                                    ->directory('course-thumbnails')
+                                Forms\Components\Repeater::make('what_you_will_learn')
+                                    ->label(__('What You Will Learn'))
+                                    ->simple(
+                                        Forms\Components\TextInput::make('learning_point')
+                                            ->required()
+                                            ->placeholder(__('e.g. Build RESTful APIs with Laravel'))
+                                    )
+                                    ->addActionLabel(__('Add Learning Point'))
                                     ->columnSpanFull(),
 
-                                TextInput::make('promo_video_url')
-                                    ->url()
-                                    ->label('Promo Video URL (Youtube/Vimeo)')
+                                Forms\Components\Repeater::make('requirements')
+                                    ->label(__('Requirements / Prerequisites'))
+                                    ->simple(
+                                        Forms\Components\TextInput::make('requirement')
+                                            ->required()
+                                            ->placeholder(__('e.g. Basic understanding of PHP'))
+                                    )
+                                    ->addActionLabel(__('Add Requirement'))
                                     ->columnSpanFull(),
                             ]),
-                    ])->columnSpanFull()
+
+                        // Tab 4: Pricing & Status
+                        Forms\Components\Tabs\Tab::make(__('Pricing & Status'))
+                            ->icon('heroicon-m-currency-dollar')
+                            ->schema([
+                                Forms\Components\TextInput::make('price')
+                                    ->label(__('Price (EGP)'))
+                                    ->numeric()
+                                    ->prefix(__('EGP'))
+                                    ->helperText(__('Leave empty or set to 0 to make it Free.')),
+
+                                Forms\Components\TextInput::make('discount_price')
+                                    ->label(__('Discount Price (EGP)'))
+                                    ->numeric()
+                                    ->prefix(__('EGP'))
+                                    ->lt('price')
+                                    ->helperText(__('Must be lower than the original price.')),
+
+                                Forms\Components\Select::make('status')
+                                    ->label(__('Status'))
+                                    ->options(CourseStatus::class)
+                                    ->default(CourseStatus::PENDING->value)
+                                    ->required(),
+                            ])->columns(2),
+                    ])
+                    ->columnSpanFull()
+                    ->activeTab(1),
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
-            ->contentGrid([
-                'md' => 2,
-                'xl' => 3, 
-            ])
+            ->recordUrl(
+                fn (Course $record): string => SectionResource::getUrl('index', ['course_id' => $record->id])
+            )
+            // جلب عدد المشتركين مع الاستعلام لتقليل الضغط على قاعدة البيانات
+            ->modifyQueryUsing(fn (Builder $query) => $query->withCount('enrollments'))
             ->columns([
-                Tables\Columns\Layout\Stack::make([
-                    
-                    // 1. الصورة العلوية (استخدام الـ View المخصص لكسر كل قيود Filament)
-                    Tables\Columns\ViewColumn::make('thumbnail')
-                        ->view('filament.instructor.components.course-thumbnail'),
-                    
-                    // 2. محتوى البطاقة
-                    Tables\Columns\Layout\Stack::make([
-                        Tables\Columns\TextColumn::make('title')
-                            ->weight('bold')
-                            ->size(Tables\Columns\TextColumn\TextColumnSize::Large)
-                            ->searchable()
-                            ->limit(40),
+                Tables\Columns\ImageColumn::make('thumbnail')
+                    ->label(__('Cover'))
+                    ->size(50)
+                    ->extraImgAttributes(['class' => 'rounded-md object-cover'])
+                    ->defaultImageUrl('https://placehold.co/600x400/f3f4f6/9ca3af?text=' . urlencode(__('Cover'))),
 
-                        Tables\Columns\TextColumn::make('category.name')
-                            ->color('gray')
-                            ->icon('heroicon-m-tag'),
+                Tables\Columns\TextColumn::make('title')
+                    ->label(__('Course Name & Category'))
+                    ->searchable()
+                    ->weight('bold')
+                    ->description(fn (Course $record): string => $record->category?->name ?? __('Uncategorized'))
+                    ->wrap(),
 
-                        Tables\Columns\Layout\Split::make([
-                            Tables\Columns\TextColumn::make('price')
-                                ->money('USD') 
-                                ->weight('bold')
-                                ->color('success'),
-                            
-                            Tables\Columns\TextColumn::make('status')
-                                ->badge(),
-                        ])->extraAttributes(['style' => 'margin-top: 1rem; align-items: center;']),
-                    ])->space(2)->extraAttributes(['style' => 'padding: 1.25rem; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between;']),
-                ])
-                ->space(0)
-                // الغلاف الخارجي للبطاقة
-                ->extraAttributes([
-                    'style' => 'background-color: var(--fi-bg-color, white); border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid var(--fi-border-color, #e5e7eb); overflow: hidden; display: flex; flex-direction: column; height: 100%; padding: 0;'
-                ]),
+                Tables\Columns\TextColumn::make('price')
+                    ->label(__('Price'))
+                    ->badge()
+                    ->color(fn ($state) => $state == 0 || is_null($state) ? 'success' : 'gray')
+                    ->formatStateUsing(fn ($state) => $state == 0 || is_null($state) ? __('Free') : number_format($state, 2) . ' ' . __('EGP'))
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('status')
+                    ->label(__('Status'))
+                    ->badge(),
+
+                Tables\Columns\TextColumn::make('enrollments_count')
+                    ->label(__('Students'))
+                    ->badge()
+                    ->color('info')
+                    ->icon('heroicon-m-users')
+                    ->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')->options(\App\Enums\CourseStatus::class),
-                Tables\Filters\SelectFilter::make('category_id')->relationship('category', 'name')->label('Category'),
+                Tables\Filters\SelectFilter::make('status')
+                    ->label(__('Status'))
+                    ->options(CourseStatus::class),
+                Tables\Filters\SelectFilter::make('category_id')
+                    ->relationship('category', 'name')
+                    ->label(__('Category')),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
+                    ->label(__('Edit'))
+                    ->button()
+                    ->color('gray'),
+                
+                // زر التوجه إلى صفحة الأقسام
+                Tables\Actions\Action::make('manage_sections')
+                    ->label(__('Manage Sections'))
+                    ->icon('heroicon-m-rectangle-stack')
                     ->button()
                     ->color('primary')
-                    ->extraAttributes(['style' => 'margin: 1rem; width: calc(100% - 2rem); display: flex; justify-content: center;']),
+                    ->url(fn (Course $record): string => SectionResource::getUrl('index', ['course_id' => $record->id])),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            //
+        ];
     }
 
     public static function getPages(): array
     {
         return [
             'index' => Pages\ListCourses::route('/'),
+            'create' => Pages\CreateCourse::route('/create'),
             'edit' => Pages\EditCourse::route('/{record}/edit'),
-            // تم إزالة صفحة create حسب طلبك
         ];
     }
 }

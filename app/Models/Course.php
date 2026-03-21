@@ -41,14 +41,22 @@ class Course extends Model
             'what_you_will_learn' => 'array',
         ];
     }
-
+    
+    // Get the instructor for the course.
     public function instructor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'instructor_id');
     }
 
+    // Get the category for the course.
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    // Get the enrollments for the course.
+    public function enrollments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Enrollment::class);
     }
 }

@@ -26,6 +26,16 @@ class Section extends Model
             'order' => 'integer',
         ];
     }
+    // Auto-Order in Sections
+    protected static function booted()
+    {
+        static::creating(function ($section) {
+            if (is_null($section->order)) {
+                $maxOrder = static::where('course_id', $section->course_id)->max('order');
+                $section->order = $maxOrder ? $maxOrder + 1 : 1;
+            }
+        });
+    }
 
     public function course(): BelongsTo
     {
