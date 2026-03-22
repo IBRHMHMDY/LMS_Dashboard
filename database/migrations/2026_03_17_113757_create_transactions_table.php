@@ -10,22 +10,30 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
+            
+            // العلاقات
             // user_id هو الطالب الذي قام بالشراء
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            // instructor_id هو صاحب الكورس لتسهيل الاستعلام عن أرباحه
+            // instructor_id هو صاحب الكورس لتسهيل الاستعلام عن أرباحه في لوحة التحكم
             $table->foreignId('instructor_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('course_id')->constrained()->cascadeOnDelete();
             
-            $table->string('transaction_number')->unique(); // رقم مرجعي داخلي
+            // رقم مرجعي داخلي للمنصة
+            $table->string('transaction_number')->unique(); 
             
+            // التفاصيل المالية
             $table->decimal('amount', 10, 2); // المبلغ الإجمالي المدفوع
             $table->decimal('platform_commission', 10, 2)->default(0.00); // عمولة المنصة
             $table->decimal('instructor_earning', 10, 2)->default(0.00); // ربح المدرب الصافي
             
-            $table->string('status')->default('pending'); // App\Enums\TransactionStatus
+            // حالة العملية (App\Enums\TransactionStatus)
+            $table->string('status')->default('pending'); 
             
-            $table->string('payment_gateway')->nullable(); // stripe, paymob, etc.
-            $table->string('payment_gateway_reference')->nullable(); // ID من بوابة الدفع
+            // بوابات الدفع (Payment Gateway & IAP)
+            $table->string('payment_method')->nullable(); // طريقة الدفع (مثل: in_app_purchase, credit_card)
+            $table->string('payment_gateway')->nullable(); // بوابة الدفع (مثل: apple_iap, google_iap, stripe)
+            $table->string('gateway_transaction_id')->unique()->nullable(); // رقم العملية العائد من المتجر أو بوابة الدفع
+            $table->text('receipt_data')->nullable(); // الإيصال (Token/Receipt) الخاص بـ Apple أو Google للتحقق Server-to-Server
             
             $table->timestamps();
         });

@@ -12,6 +12,8 @@ use App\Models\Section;
 use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\Wishlist;
+use App\Models\CourseReview;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -117,10 +119,10 @@ class DatabaseSeeder extends Seeder
             }
         }
 
-        $this->command->info('Creating Enrollments, Transactions, and Progress...');
+        $this->command->info('Creating Enrollments, IAP Transactions, Wishlists and Reviews...');
 
-        // 8. تسجيل الطلاب والمدفوعات
-        foreach ($students as $student) {
+        // 8. تسجيل الطلاب، المدفوعات (متضمنة IAP)، المفضلة، والتقييمات
+        foreach ($students as $index => $student) {
             $randomCourses = collect($createdCourses)->random(rand(2, 4));
             
             foreach ($randomCourses as $course) {
@@ -129,6 +131,9 @@ class DatabaseSeeder extends Seeder
                 if ($course->price > 0) {
                     $commission = $course->price * 0.20;
                     $earning = $course->price - $commission;
+
+                    // تنويع طرق الدفع لتشمل In-App Purchases وبوابات الدفع العادية
+                    $isIap = $index % 2 === 0;
 
                     Transaction::create([
                         'user_id' => $student->id,
@@ -139,8 +144,10 @@ class DatabaseSeeder extends Seeder
                         'platform_commission' => $commission,
                         'instructor_earning' => $earning,
                         'status' => 'completed',
-                        'payment_gateway' => 'mock_card',
-                        'payment_gateway_reference' => 'ref_' . Str::random(8),
+                        'payment_method' => $isIap ? 'in_app_purchase' : 'credit_card',
+                        'payment_gateway' => $isIap ? 'apple_iap' : 'stripe',
+                        'gateway_transaction_id' => ($isIap ? 'APPLE_TX_' : 'ch_3Nl4_') . Str::random(12),
+                        'receipt_data' => $isIap ? 'MIAGCSqGSIb3DQEHAqCAMIACAQExDzANBgkqhkiG9w0BAQsFAD...' : null,
                         'created_at' => $enrollDate,
                         'updated_at' => $enrollDate,
                     ]);
@@ -155,10 +162,19 @@ class DatabaseSeeder extends Seeder
                     'updated_at' => $enrollDate,
                 ]);
 
-                // التعديل الآمن: جلب الدروس عبر الاستعلام المباشر من قاعدة البيانات
+                // التقييمات (Course Reviews) للكورسات التي تم الاشتراك بها (باحتمالية 50%)
+                if (rand(0, 1)) {
+                    CourseReview::updateOrCreate(
+                        ['user_id' => $student->id, 'course_id' => $course->id],
+                        [
+                            'rating' => rand(3, 5), 
+                            'comment' => 'This is an auto-generated review for ' . $course->title . '!'
+                        ]
+                    );
+                }
+
                 $sectionIds = Section::where('course_id', $course->id)->pluck('id');
                 $lessons = Lesson::whereIn('section_id', $sectionIds)->get();
-                
                 $lessonsToComplete = $lessons->take(rand(2, 8));
                 
                 foreach ($lessonsToComplete as $lesson) {
@@ -167,6 +183,16 @@ class DatabaseSeeder extends Seeder
                         ['completed_at' => (clone $enrollDate)->addDays(rand(1, 5))]
                     );
                 }
+            }
+
+            // إضافة كورسات للمفضلة (Wishlist) (كورسات لم يشترك فيها الطالب بعد)
+            $unEnrolledCourses = collect($createdCourses)->whereNotIn('id', $randomCourses->pluck('id'));
+            if ($unEnrolledCourses->isNotEmpty()) {
+                $wishlistCourse = $unEnrolledCourses->random();
+                Wishlist::updateOrCreate([
+                    'user_id' => $student->id,
+                    'course_id' => $wishlistCourse->id
+                ]);
             }
         }
 
