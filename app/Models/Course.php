@@ -59,4 +59,16 @@ class Course extends Model
     {
         return $this->hasMany(Enrollment::class);
     }
+
+    // Get the wishlists containing this course.
+    public function wishlists(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+
+    // Get the reviews for the course.
+    public function reviews(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(CourseReview::class);
+    }
 }

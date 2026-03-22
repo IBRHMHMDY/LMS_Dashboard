@@ -77,4 +77,20 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(\App\Models\Transaction::class, 'user_id');
     }
+
+    /**
+     * علاقة الطالب بقائمة المفضلة
+     */
+    public function wishlists(): HasMany
+    {
+        return $this->hasMany(\App\Models\Wishlist::class, 'user_id');
+    }
+
+    /**
+     * علاقة الطالب بالتقييمات التي قام بكتابتها
+     */
+    public function courseReviews(): HasMany
+    {
+        return $this->hasMany(\App\Models\CourseReview::class, 'user_id');
+    }
 }

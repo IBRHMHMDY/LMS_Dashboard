@@ -4,6 +4,9 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\CourseController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\V1\WishlistController;
+use App\Http\Controllers\Api\V1\CourseReviewController;
+
 
 Route::prefix('v1')->group(function () {
     
@@ -16,7 +19,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/courses', [CourseController::class, 'index']);
     Route::get('/courses/{slug}', [CourseController::class, 'show']);
-
+    Route::get('/courses/{course}/reviews', [CourseReviewController::class, 'index']); 
 
     //Sanctum (Protected)
     Route::middleware('auth:sanctum')->group(function () {
@@ -34,6 +37,13 @@ Route::prefix('v1')->group(function () {
         // (Lessons & Progress)
         Route::get('/lessons/{lesson}', [\App\Http\Controllers\Api\V1\LessonController::class, 'show']);
         Route::post('/lessons/{lesson}/complete', [\App\Http\Controllers\Api\V1\LessonController::class, 'toggleComplete']);
+
+        // (Wishlist)
+        Route::get('/wishlists', [WishlistController::class, 'index']);
+        Route::post('/courses/{course}/wishlists/toggle', [WishlistController::class, 'toggle']);
+
+        // (Course Reviews)
+        Route::post('/courses/{course}/reviews', [CourseReviewController::class, 'store']);
     });
 
 });

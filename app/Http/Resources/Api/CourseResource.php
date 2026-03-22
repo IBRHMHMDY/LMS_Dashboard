@@ -18,6 +18,12 @@ class CourseResource extends JsonResource
             'price' => (float) $this->price,
             'discount_price' => $this->discount_price ? (float) $this->discount_price : null,
             'level' => $this->level,
+            
+            // بيانات التقييم والمفضلة (يتم حسابها في الـ Controller)
+            'average_rating' => (float) round($this->reviews_avg_rating ?? 0, 1),
+            'reviews_count' => (int) ($this->reviews_count ?? 0),
+            'is_in_wishlist' => (bool) ($this->wishlisted_by_user_exists ?? false),
+
             'instructor' => [
                 'id' => $this->instructor->id ?? null,
                 'name' => $this->instructor->name ?? null,
