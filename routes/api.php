@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\V1\CourseController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\WishlistController;
 use App\Http\Controllers\Api\V1\CourseReviewController;
-
+use App\Http\Controllers\Api\V1\NotificationController;
 
 Route::prefix('v1')->group(function () {
     
@@ -30,13 +30,14 @@ Route::prefix('v1')->group(function () {
             Route::post('/logout', [AuthController::class, 'logout']);
         });
         
-        // (My Learning & Enrollments)
+        // (MyLearning & Enrollments)
         Route::get('/my-courses', [\App\Http\Controllers\Api\V1\EnrollmentController::class, 'myCourses']);
         Route::post('/courses/{course}/enroll', [\App\Http\Controllers\Api\V1\EnrollmentController::class, 'enroll']);
         Route::get('/courses/{course}/enrollment-status', [\App\Http\Controllers\Api\V1\EnrollmentController::class, 'checkStatus']);
         // (Lessons & Progress)
         Route::get('/lessons/{lesson}', [\App\Http\Controllers\Api\V1\LessonController::class, 'show']);
         Route::post('/lessons/{lesson}/complete', [\App\Http\Controllers\Api\V1\LessonController::class, 'toggleComplete']);
+        Route::post('/lessons/{lesson}/sync-progress', [\App\Http\Controllers\Api\V1\LessonController::class, 'syncProgress']);
 
         // (Wishlist)
         Route::get('/wishlists', [WishlistController::class, 'index']);
@@ -44,6 +45,10 @@ Route::prefix('v1')->group(function () {
 
         // (Course Reviews)
         Route::post('/courses/{course}/reviews', [CourseReviewController::class, 'store']);
+
+        // (Notifications)
+        Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
     });
 
 });

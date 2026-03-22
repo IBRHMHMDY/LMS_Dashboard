@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('lesson_id')->constrained()->cascadeOnDelete();
-            
+            $table->unsignedInteger('watch_time_in_seconds')->default(0);
             $table->timestamp('completed_at')->nullable(); // إذا كان Null فالدرس غير مكتمل
             
             $table->timestamps();

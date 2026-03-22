@@ -13,6 +13,7 @@ class LessonProgress extends Model
     protected $fillable = [
         'user_id',
         'lesson_id',
+        'watch_time_in_seconds',
         'completed_at',
     ];
 

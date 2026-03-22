@@ -20,8 +20,10 @@ class Transaction extends Model
         'platform_commission',
         'instructor_earning',
         'status',
+        'payment_method',
         'payment_gateway',
-        'payment_gateway_reference',
+        'gateway_transaction_id',
+        'receipt_data',
     ];
 
     protected function casts(): array
