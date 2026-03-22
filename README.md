@@ -63,3 +63,39 @@ All endpoints follow this strict unified structure. This makes writing network i
     "is_completed": false
   }
 }
+```
+**Validation Error Response (422 Unprocessable Entity)**
+
+```JSON
+{
+  "success": false,
+  "message": "The given data was invalid.",
+  "errors": {
+    "rating": ["The rating must be between 1 and 5."]
+  }
+}
+```
+## 🚀 Quick Start (Development)
+1. Clone the repository.
+
+2. Install PHP dependencies: composer install
+
+3. Copy .env.example to .env and set up your database credentials.
+
+4. Generate app key: php artisan key:generate
+
+5. Run the master migration and seeder (Populates roles, users, courses, and IAP transactions):
+
+```bash
+php artisan migrate:fresh --seed
+Install and configure API routing:
+```
+```bash
+php artisan install:api
+```
+Start the local server: 
+```bash 
+php artisan serve
+```
+
+**Architected and developed with a focus on scalability and mobile-first integration.**
