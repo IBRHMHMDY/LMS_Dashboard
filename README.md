@@ -78,22 +78,25 @@ All endpoints follow this strict unified structure. This makes writing network i
 ## 🚀 Quick Start (Development)
 1. Clone the repository.
 
-2. Install PHP dependencies: composer install
-
+2. Install PHP dependencies: 
+```bash
+composer install
+```
 3. Copy .env.example to .env and set up your database credentials.
 
-4. Generate app key: php artisan key:generate
-
+4. Generate app key: 
+```bash
+php artisan key:generate
+```
 5. Run the master migration and seeder (Populates roles, users, courses, and IAP transactions):
-
 ```bash
 php artisan migrate:fresh --seed
-Install and configure API routing:
 ```
+6. Install and configure API routing:
 ```bash
 php artisan install:api
 ```
-Start the local server: 
+7. Start the local server: 
 ```bash 
 php artisan serve
 ```
